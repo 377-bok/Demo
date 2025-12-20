@@ -1,0 +1,331 @@
+﻿<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>BOK旅遊公司</title>
+    <style>
+        body {
+            font-family: Arial, "Noto Sans TC", sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f6f7fb;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        select, input[type="text"], input[type="email"], input[type="tel"], input[type="date"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d6d9e6;
+            border-radius: 6px;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        .actions {
+            text-align: right;
+            margin-top: 14px;
+        }
+
+        button {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: none;
+            background: #0b74de;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+            button.secondary {
+                background: #6b7280;
+            }
+
+        /* modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.45);
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity .18s;
+        }
+
+            .modal.open {
+                visibility: visible;
+                opacity: 1;
+            }
+
+            .modal .card {
+                background: #fff;
+                padding: 20px;
+                border-radius: 8px;
+                max-width: 600px;
+                width: 90%;
+            }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="HtmlPage4.html">景點介紹</a>
+        <h1>旅遊預訂</h1>
+        <p>請按順序填選：國家 ➡ 景點 ➡ 航空公司 ➡ 個人資料 ➡ 日期。最後點選「確認並預覽」會跳出預覽視窗。</p>
+
+        <form id="travelForm">
+            <div class="grid">
+                <!-- 國家與景點 -->
+                <div>
+                    <label for="country">選擇國家</label>
+                    <select id="country" required>
+                        <option value="">-- 請選擇國家 --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="attraction">選擇景點</label>
+                    <select id="attraction" required>
+                        <option value="">-- 請先選國家 --</option>
+                    </select>
+                </div>
+
+                <!-- 航空公司 -->
+                <div>
+                    <label for="airline">選擇機票 / 航空公司</label>
+                    <select id="airline" required>
+                        <option value="">-- 請先選國家 --</option>
+                    </select>
+                </div>
+
+                <!-- 個人資料 -->
+                <div class="full">
+                    <label>填寫個人資料</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div>
+                            <label for="name">姓名</label>
+                            <input type="text" id="name" placeholder="輸入姓名" required />
+                        </div>
+                        <div>
+                            <label for="phone">電話</label>
+                            <input type="tel" id="phone" placeholder="例如：0912-345-678" required />
+                        </div>
+                        <div>
+                            <label for="email">電子信箱</label>
+                            <input type="email" id="email" placeholder="example@mail.com" required />
+                        </div>
+                        <div>
+                            <label for="passport">護照號碼 (選填)</label>
+                            <input type="text" id="passport" placeholder="護照號碼" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 日期 -->
+                <div>
+                    <label for="depart">出發日期</label>
+                    <input type="date" id="depart" required />
+                </div>
+                <div>
+                    <label for="return">回程日期</label>
+                    <input type="date" id="return" required />
+                </div>
+
+                <!-- 備註 -->
+                <div class="full">
+                    <label for="note">備註</label>
+                    <input type="text" id="note" placeholder="特殊需求或備註 (選填)" />
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="secondary" id="resetBtn">清除</button>
+                <button type="submit" id="submitBtn">確認並預覽</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 最後跳出的彈窗 -->
+    <div id="modal" class="modal" role="dialog" aria-hidden="true">
+        <div class="card">
+            <h2>預訂內容確認</h2>
+            <div id="summary"></div>
+            <div style="text-align:right;margin-top:12px">
+                <button id="confirmPurchase">確定送出</button>
+                <button id="closeModal" class="secondary" style="margin-left:8px">返回修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 國家與其景點資料
+        const data = {
+            "日本": ["東京塔", "淺草寺", "富士山", "京都清水寺"],
+            "南韓": ["首爾塔", "景福宮", "南山谷韓屋村", "釜山海雲台"],
+            "美國": ["自由女神像", "大峽谷", "黃石公園", "好萊塢"],
+            "中國": ["故宮博物院", "萬里長城", "上海迪士尼", "世界之窗"]
+        };
+
+        // 國家與航空公司資料
+        const airlineData = {
+            "日本": ["全日空", "日本航空", "長榮航空", "星宇航空"],
+            "南韓": ["大韓航空", "韓亞航空", "中華航空", "長榮航空"],
+            "中國": ["中國東方航空", "中國南方航空", "中華航空", "長榮航空"],
+            "美國": ["達美航空", "聯合航空", "長榮航空", "星宇航空"]
+        };
+
+        const countrySelect = document.getElementById('country');
+        const attractionSelect = document.getElementById('attraction');
+        const airlineSelect = document.getElementById('airline');
+
+        // 初始化國家選項
+        Object.keys(data).forEach(country => {
+            const opt = document.createElement('option');
+            opt.value = country;
+            opt.textContent = country;
+            countrySelect.appendChild(opt);
+        });
+
+        // 當國家變更時，更新景點與航空公司
+        countrySelect.addEventListener('change', () => {
+            const chosen = countrySelect.value;
+
+            // 更新景點
+            attractionSelect.innerHTML = '';
+            if (!chosen) {
+                attractionSelect.innerHTML = '<option value="">-- 請先選國家 --</option>';
+            } else {
+                const list = data[chosen] || [];
+                attractionSelect.innerHTML = '<option value="">-- 請選擇景點 --</option>';
+                list.forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a;
+                    opt.textContent = a;
+                    attractionSelect.appendChild(opt);
+                });
+            }
+
+            // 更新航空公司
+            airlineSelect.innerHTML = '';
+            if (!chosen) {
+                airlineSelect.innerHTML = '<option value="">-- 請先選國家 --</option>';
+            } else {
+                const airlines = airlineData[chosen] || [];
+                airlineSelect.innerHTML = '<option value="">-- 請選擇航空公司 --</option>';
+                airlines.forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a;
+                    opt.textContent = a;
+                    airlineSelect.appendChild(opt);
+                });
+            }
+        });
+
+        // 表單送出
+        const form = document.getElementById('travelForm');
+        const modal = document.getElementById('modal');
+        const summary = document.getElementById('summary');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const depart = document.getElementById('depart').value;
+            const ret = document.getElementById('return').value;
+            if (depart && ret && depart > ret) {
+                alert('回程日期不得早於出發日期');
+                return;
+            }
+
+            const values = {
+                country: countrySelect.value,
+                attraction: attractionSelect.value,
+                airline: airlineSelect.value,
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                passport: document.getElementById('passport').value,
+                depart, ret,
+                note: document.getElementById('note').value
+            };
+
+            const required = ['country', 'attraction', 'airline', 'name', 'phone', 'email', 'depart', 'ret'];
+            for (const k of required) {
+                if (!values[k]) { alert('請完整填寫所有必要欄位'); return; }
+            }
+
+            summary.innerHTML = '';
+            for (const key of ['country', 'attraction', 'airline', 'name', 'phone', 'email', 'passport', 'depart', 'ret', 'note']) {
+                const row = document.createElement('div');
+                row.className = 'summary-row';
+                const label = document.createElement('div');
+                label.textContent = ({ country: '國家', attraction: '景點', airline: '航空公司', name: '姓名', phone: '電話', email: '電子信箱', passport: '護照號', depart: '出發日期', ret: '回程日期', note: '備註' })[key];
+                const val = document.createElement('div');
+                val.textContent = values[key] || '-';
+                row.appendChild(label);
+                row.appendChild(val);
+                summary.appendChild(row);
+            }
+
+            modal.classList.add('open');
+        });
+
+        document.getElementById('closeModal').addEventListener('click', () => {
+            modal.classList.remove('open');
+        });
+
+        document.getElementById('confirmPurchase').addEventListener('click', () => {
+            modal.classList.remove('open');
+            alert('已送出預訂！感謝您的使用。');
+            form.reset();
+            attractionSelect.innerHTML = '<option value="">-- 請先選國家 --</option>';
+            airlineSelect.innerHTML = '<option value="">-- 請先選國家 --</option>';
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (confirm('確定要清除所有填寫內容嗎？')) {
+                form.reset();
+                attractionSelect.innerHTML = '<option value="">-- 請先選國家 --</option>';
+                airlineSelect.innerHTML = '<option value="">-- 請先選國家 --</option>';
+            }
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('open');
+        });
+    </script>
+</body>
+</html>

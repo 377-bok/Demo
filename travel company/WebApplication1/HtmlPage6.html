@@ -1,0 +1,142 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>車輛預訂系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container my-5">
+        <h2 class="text-center mb-4">車輛預訂系統</h2>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <form id="bookingForm">
+
+                            <!-- 車型選擇 -->
+                            <div class="mb-3">
+                                <label for="carType" class="form-label">選擇車型</label>
+                                <select class="form-select" id="carType" required>
+                                    <option selected disabled>請選擇車型</option>
+                                    <option value="轎車">轎車</option>
+                                    <option value="越野車/休旅車/跑旅車">越野車/休旅車/跑旅車</option>
+                                    <option value="掀背車/轎旅車">掀背車/轎旅車</option>
+                                    <option value="商旅車">商旅車</option>
+                                </select>
+                            </div>
+
+                            <!-- 車輛選擇 -->
+                            <div class="mb-3">
+                                <label for="carNumber" class="form-label">選擇車輛</label>
+                                <select class="form-select" id="carNumber" required>
+                                    <option selected disabled>請先選擇車型</option>
+                                </select>
+                            </div>
+
+                            <!-- 日期 -->
+                            <div class="mb-3">
+                                <label for="bookingDate" class="form-label">預訂日期</label>
+                                <input type="date" class="form-control" id="bookingDate" required>
+                            </div>
+
+                            <!-- 聯絡資訊 -->
+                            <div class="mb-3">
+                                <label for="customerName" class="form-label">姓名</label>
+                                <input type="text" class="form-control" id="customerName" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="customerPhone" class="form-label">電話</label>
+                                <input type="tel" class="form-control" id="customerPhone" required>
+                            </div>
+
+                            <!-- 預覽按鈕 -->
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#previewModal" id="previewBtn">
+                                    預覽資料
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 預覽 Modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="previewModalLabel">預訂資料預覽</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>車型:</strong> <span id="previewCarType"></span></p>
+                    <p><strong>車輛:</strong> <span id="previewCarNumber"></span></p>
+                    <p><strong>日期:</strong> <span id="previewDate"></span></p>
+                    <p><strong>姓名:</strong> <span id="previewName"></span></p>
+                    <p><strong>電話:</strong> <span id="previewPhone"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">返回修改</button>
+                    <button type="button" class="btn btn-success" id="submitBtn">確認送出</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 車型對應車輛
+        const carOptions = {
+            "轎車": ["A-Class Sedan", "EQE", "EQS", "E-Class Sedan","Mercedes-Maybach S-Class"],
+            "越野車/休旅車/跑旅車": ["EQA", "EQB", "EQE SUV","GLA","GLB","GLC"],
+            "掀背車/轎旅車": ["A-Class Hatchback", "B-Class"],
+            "商旅車": ["V-Class", "Vito Tourer"]
+        };
+
+        const carTypeSelect = document.getElementById('carType');
+        const carNumberSelect = document.getElementById('carNumber');
+
+        carTypeSelect.addEventListener('change', function () {
+            const type = this.value;
+            carNumberSelect.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.text = '請選擇車輛';
+            defaultOption.disabled = true;
+            defaultOption.selected = true;
+            carNumberSelect.add(defaultOption);
+
+            carOptions[type].forEach(number => {
+                const option = document.createElement('option');
+                option.value = number;
+                option.text = number;
+                carNumberSelect.add(option);
+            });
+        });
+
+        // 預覽資料
+        document.getElementById('previewBtn').addEventListener('click', function () {
+            document.getElementById('previewCarType').textContent = carTypeSelect.value;
+            document.getElementById('previewCarNumber').textContent = carNumberSelect.value;
+            document.getElementById('previewDate').textContent = document.getElementById('bookingDate').value;
+            document.getElementById('previewName').textContent = document.getElementById('customerName').value;
+            document.getElementById('previewPhone').textContent = document.getElementById('customerPhone').value;
+        });
+
+        // 確認送出
+        document.getElementById('submitBtn').addEventListener('click', function () {
+            alert('資料已送出！');
+            document.getElementById('bookingForm').reset();
+            var modal = bootstrap.Modal.getInstance(document.getElementById('previewModal'));
+            modal.hide();
+        });
+    </script>
+
+</body>
+</html>
